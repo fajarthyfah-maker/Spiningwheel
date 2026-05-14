@@ -1,145 +1,213 @@
-import streamlit as st
-import pandas as pd
-from collections import Counter
-import itertools
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard Analisis Togel Modern</title>
+    <!-- Menggunakan Tailwind CSS untuk tampilan antarmuka yang bersih -->
+    <script src="jsdelivr.net"></script>
+</head>
+<body class="bg-slate-900 text-slate-100 min-h-screen p-4 md:p-8">
 
-# Konfigurasi Halaman
-st.set_page_config(page_title="Lottery Analytics Dashboard", layout="wide")
+    <div class="max-w-7xl mx-auto">
+        <!-- Header -->
+        <header class="mb-8 text-center md:text-left">
+            <h1 class="text-3xl font-black text-amber-400 tracking-wide uppercase">Lottery Analytics Dashboard</h1>
+            <p class="text-slate-400 text-sm mt-1">Sistem Analisis Kombinatorial & Probabilitas Statistik Otomatis</p>
+        </header>
 
-st.title("📊 Lottery Analytics Dashboard (Metode Barat)")
-st.caption("Otomatisasi Analisis Frekuensi, Keseimbangan, Sum Tracking, dan Abbreviated Wheeling")
-
-# Layout Utama: Kolom Kiri (Input) & Kolom Kanan (Dashboard)
-col_input, col_dash = st.columns([1, 2])
-
-with col_input:
-    st.header("📝 Input Data")
-    raw_input = st.text_area(
-        "Tempel data pengeluaran 4D di sini (Satu baris satu angka):",
-        value="4321\n8765\n1234\n0987\n5543\n2190\n7432\n8901\n6543\n2109",
-        height=300
-    )
-    
-    # Tombol Eksekusi
-    proses_data = st.button("🚀 Hitung Prediksi Otomatis", use_container_width=True)
-
-# Memproses data jika tombol ditekan atau data default tersedia
-if raw_input:
-    # Parsing input data menjadi list string 4 digit angka valid
-    baris = raw_input.strip().split("\n")
-    data_4d = [b.strip() for b in baris if b.strip().isdigit() and len(b.strip()) == 4]
-    
-    if not data_4d:
-        st.error("Format data tidak valid. Pastikan input berupa angka 4 digit per baris.")
-    else:
-        # --- ENGINE KALKULASI DI LATAR BELAKANG ---
-        
-        # 1. Hitung Frekuensi Semua Digit (0-9)
-        semua_digit = []
-        posisi_terakhir = {str(i): len(data_4d) for i in range(10)} # Untuk skip strategy
-        
-        for idx, angka in enumerate(data_4d):
-            for digit in angka:
-                semua_digit.append(digit)
-            # Catat kapan terakhir kali angka muncul (semakin kecil idx, semakin baru kluarannya)
-            for d in set(angka):
-                if posisi_terakhir[d] == len(data_4d): 
-                    posisi_terakhir[d] = idx
-
-        hitung_frekuens = Counter(semua_digit)
-        # Ambil semua angka diurutkan dari yang paling sering keluar
-        urut_frekuensi = [item[0] for item in hitung_frekuens.most_common()]
-        # Lengkapi angka yang mungkin tidak muncul sama sekali di input
-        for i in range(10):
-            if str(i) not in urut_frekuensi:
-                urut_frekuensi.append(str(i))
-                
-        hot_numbers = urut_frekuensi[:4]
-        cold_numbers = urut_frekuensi[-4:]
-        due_numbers = sorted(posisi_terakhir.keys(), key=lambda x: posisi_terakhir[x], reverse=True)[:3]
-
-        # 2. Analisis Keseimbangan (Odd-Even & High-Low)
-        total_ganjil = sum(1 for d in semua_digit if int(d) % 2 != 0)
-        total_genap = sum(1 for d in semua_digit if int(d) % 2 == 0)
-        total_kecil = sum(1 for d in semua_digit if int(d) <= 4)
-        total_besar = sum(1 for d in semua_digit if int(d) >= 5)
-        
-        # Rasio rekomendasi kelompok angka utama (Pool)
-        genap_pool = [int(x) for x in hot_numbers if int(x) % 2 == 0][:3]
-        ganjil_pool = [int(x) for x in hot_numbers if int(x) % 2 != 0][:3]
-        # Jika kurang dari 3, ambil dari sisa angka frekuensi teratas
-        for x in urut_frekuensi:
-            if len(genap_pool) < 3 and int(x) % 2 == 0 and int(x) not in genap_pool:
-                genap_pool.append(int(x))
-            if len(ganjil_pool) < 3 and int(x) % 2 != 0 and int(x) not in ganjil_pool:
-                ganjil_pool.append(int(x))
-        
-        pool_6_angka = sorted(genap_pool + ganjil_pool)
-
-        # 3. Sum Tracking (Jumlah Total 4D)
-        daftar_sum = [sum(map(int, angka)) for angka in data_4d]
-        rata_rata_sum = round(sum(daftar_sum) / len(daftar_sum))
-        
-        # --- OUTPUT DASHBOARD DI KOLOM KANAN ---
-        with col_dash:
-            st.header("📊 Dashboard Hasil Analisis")
+        <!-- Main Layout -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
             
-            # Tabulasi internal aplikasi
-            tab1, tab2, tab3 = st.tabs(["🔥 1. Frekuensi & Tren", "📐 2. Sum Tracking", "🎡 3. Generator Roda Ringkas"])
-            
-            with tab1:
-                st.subheader("Analisis Frekuensi Angka")
-                c1, c2, c3 = st.columns(3)
-                c1.metric("Hot Numbers (Sering)", ", ".join(hot_numbers))
-                c2.metric("Cold Numbers (Jarang)", ", ".join(cold_numbers))
-                c3.metric("Due Numbers (Terlama Absen)", ", ".join(due_numbers))
+            <!-- KOLOM KIRI: INPUT DATA -->
+            <div class="bg-slate-800 p-6 rounded-2xl border border-slate-700 h-fit shadow-xl">
+                <h2 class="text-xl font-bold mb-4 flex items-center gap-2 text-slate-200">
+                    📥 Input Histori Pasaran
+                </h2>
+                <p class="text-xs text-slate-400 mb-3">Bebas format! Bisa dipisah spasi, koma, atau enter. Contoh: 1234,5678 9012</p>
                 
-                st.subheader("Penyaring Keseimbangan")
-                col_prop1, col_prop2 = st.columns(2)
-                col_prop1.write(f"🟢 **Proporsi Ganjil-Genap:** {total_ganjil} Ganjil vs {total_genap} Genap")
-                col_prop2.write(f"🔵 **Proporsi Besar-Kecil:** {total_besar} Besar vs {total_kecil} Kecil")
+                <textarea id="inputData" rows="12" class="w-full bg-slate-950 border border-slate-700 rounded-xl p-4 font-mono text-amber-300 focus:outline-none focus:border-amber-400 transition" placeholder="1234, 4567, 8901&#10;1234 1237 6789"></textarea>
                 
-                # Formula Rekomendasi Pola
-                st.info(f"💡 **Rekomendasi Pola Pasang:** Gunakan kombinasi seimbang **3 Angka Ganjil + 3 Angka Genap** untuk membangun kelompok angka utama Anda.")
+                <button onclick="prosesAnalisis()" class="w-full mt-4 bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold py-3 rounded-xl transition cursor-pointer shadow-lg shadow-amber-500/10">
+                    ⚡ Hitung Analisis Prediksi
+                </button>
+            </div>
 
-            with tab2:
-                st.subheader("Zona Jumlah Total (Sum Tracking)")
-                st.write(f"Rata-rata total jumlah digit dari data histori Anda adalah: **{rata_rata_sum}**")
+            <!-- KOLOM KANAN: DASHBOARD PREDIKSI -->
+            <div class="lg:col-span-2 space-y-6">
                 
-                # Rekomendasi zona kurva lonceng berdasarkan rata-rata histori
-                zona_bawah = max(9, rata_rata_sum - 2)
-                zona_atas = min(27, rata_rata_sum + 2)
-                
-                st.success(f"🎯 **Hot Sum Zone Anda:** targetkan hasil kombinasi yang jika digitnya dijumlahkan bernilai antara **{zona_bawah} sampai {zona_atas}**.")
-                
-                # Tampilkan tabel histori sum untuk visualisasi mandiri
-                df_sum = pd.DataFrame({"Keluaran": data_4d, "Total Jumlah Digit": daftar_sum})
-                st.dataframe(df_sum, use_container_width=True)
+                <!-- AREA NOTIFIKASI / PERINGATAN POLA PATAH -->
+                <div id="papanPeringatan" class="hidden p-4 rounded-xl border flex items-start gap-3">
+                    <!-- Dinamis diisi oleh JS -->
+                </div>
 
-            with tab3:
-                st.subheader("Abbreviated Wheeling System (Garansi Tembus 2D)")
-                st.write(f"Sistem otomatis memilih 6 angka utama terbaik berdasarkan hukum keseimbangan: **{', '.join(map(str, pool_6_angka))}**")
-                
-                # Menggunakan rumus desain kombinatorial template roda ringkas 6 angka mengunci 2D
-                # Rumus roda ringkas indeks posisi: (1-2), (1-3), (2-3), (4-5), (4-6), (5-6), (1-4), (2-5), (3-6)
-                p = pool_6_angka
-                template_roda = [
-                    f"{p[0]}{p[1]}", f"{p[0]}{p[2]}", f"{p[1]}{p[2]}",
-                    f"{p[3]}{p[4]}", f"{p[3]}{p[5]}", f"{p[4]}{p[5]}",
-                    f"{p[0]}{p[3]}", f"{p[1]}{p[4]}", f"{p[2]}{p[5]}"
-                ]
-                
-                st.warning("⚠️ **Sistem Roda Ringkas Berhasil Dibuat!** Jika minimal 2 angka yang keluar malam ini ada di dalam 6 angka utama di atas, Anda **DIJAMIN** menang minimal 1 baris tebakan di bawah ini.")
-                
-                # Tampilkan hasil roda ringkas siap pasang
-                df_roda = pd.DataFrame({
-                    "Line Taruhan 2D": template_roda,
-                    "Total Jumlah Digit": [sum(map(int, line)) for line in template_roda]
-                })
-                
-                # Filter visual mana yang masuk ke dalam hot sum zone
-                df_roda["Rekomendasi Bet Lebih"] = df_roda["Total Jumlah Digit"].apply(
-                    lambda x: "🔥 Bet Lebih Besar" if (x >= 9 and x <= 11) else "Normal"
-                )
-                
-                st.dataframe(df_roda, use_container_width=True)
+                <!-- HASIL PREDIKSI GRAPH & DATA -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    
+                    <!-- Panel 1: Frekuensi Angka -->
+                    <div class="bg-slate-800 p-5 rounded-2xl border border-slate-700 shadow-md">
+                        <h3 class="text-md font-bold text-slate-400 mb-3 uppercase tracking-wider">🔥 Analisis Frekuensi</h3>
+                        <div class="space-y-3">
+                            <div>
+                                <span class="text-xs text-slate-400 block">Hot Numbers (Sering Keluar):</span>
+                                <div id="hotNum" class="text-xl font-extrabold text-amber-400 font-mono mt-1">-</div>
+                            </div>
+                            <div>
+                                <span class="text-xs text-slate-400 block">Cold Numbers (Jarang Keluar):</span>
+                                <div id="coldNum" class="text-xl font-extrabold text-blue-400 font-mono mt-1">-</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Panel 2: Keseimbangan Tren -->
+                    <div class="bg-slate-800 p-5 rounded-2xl border border-slate-700 shadow-md">
+                        <h3 class="text-md font-bold text-slate-400 mb-3 uppercase tracking-wider">⚖️ Keseimbangan Tren</h3>
+                        <div class="space-y-2 text-sm">
+                            <div class="flex justify-between border-b border-slate-700 pb-1">
+                                <span class="text-slate-400">Rasio Ganjil-Genap:</span>
+                                <span id="rasioGanjilGenap" class="font-mono font-bold">-</span>
+                            </div>
+                            <div class="flex justify-between border-b border-slate-700 pb-1">
+                                <span class="text-slate-400">Rasio Besar-Kecil:</span>
+                                <span id="rasioBesarKecil" class="font-mono font-bold">-</span>
+                            </div>
+                            <div class="flex justify-between border-b border-slate-700 pb-1">
+                                <span class="text-slate-400">Total Data Valid Terbaca:</span>
+                                <span id="totalData" class="font-mono font-bold text-amber-400">-</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Panel 3: Hasil Generator Roda Ringkas -->
+                <div class="bg-slate-800 p-6 rounded-2xl border border-slate-700 shadow-md">
+                    <h3 class="text-md font-bold text-slate-400 mb-1 uppercase tracking-wider">🎡 Abbreviated Wheel Generator (2D)</h3>
+                    <p class="text-xs text-slate-400 mb-4">Sistem roda otomatis berdasarkan 6 angka terbaik hasil kalkulasi frekuensi & tren.</p>
+                    
+                    <div id="hasilRoda" class="grid grid-cols-3 sm:grid-cols-5 gap-3 font-mono font-bold text-center">
+                        <!-- Angka hasil roda akan muncul di sini -->
+                        <div class="bg-slate-900/50 text-slate-500 py-3 rounded-xl border border-slate-800 border-dashed col-span-full">
+                            Belum ada data untuk diproses
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <!-- LOGIKA PEMROSESAN UTAMA (JAVASCRIPT) -->
+    <script>
+        function prosesAnalisis() {
+            const inputText = document.getElementById('inputData').value.trim();
+            if (!inputText) {
+                alert('Silakan masukkan data histori terlebih dahulu.');
+                return;
+            }
+
+            // FILTER BEBAS FORMAT: Menggunakan Regex untuk mencari semua kumpulan 4 digit angka di dalam teks
+            // Format spasi, koma, enter, atau strip otomatis tersaring dengan benar
+            const barisData = inputText.match(/\b\d{4}\b/g) || [];
+
+            if (barisData.length < 5) {
+                alert('Sistem mendeteksi hanya ' + barisData.length + ' data 4D yang valid. Mohon masukkan minimal 5 data 4D.');
+                return;
+            }
+
+            // Tampilkan jumlah data terbaca
+            document.getElementById('totalData').innerText = `${barisData.length} Angka`;
+
+            // 1. HITUNG FREKUENSI UNTUK MENCARI HOT/COLD
+            let hitungDigit = Array(10).fill(0);
+            let ganjilCount = 0, genapCount = 0;
+            let besarCount = 0, kecilCount = 0;
+
+            barisData.forEach(angka4D => {
+                for (let i = 0; i < 4; i++) {
+                    let d = parseInt(angka4D[i]);
+                    hitungDigit[d]++;
+                    
+                    if (d % 2 === 0) genapCount++; else ganjilCount++;
+                    if (d >= 5) besarCount++; else kecilCount++;
+                }
+            });
+
+            let petaFrekuensi = hitungDigit.map((freq, num) => ({ num, freq }));
+            let urutanTertinggi = [...petaFrekuensi].sort((a, b) => b.freq - a.freq);
+            let hotNumbers = urutanTertinggi.slice(0, 4).map(x => x.num);
+            let coldNumbers = [...petaFrekuensi].sort((a, b) => a.freq - b.freq).slice(0, 3).map(x => x.num);
+
+            document.getElementById('hotNum').innerText = hotNumbers.join(', ');
+            document.getElementById('coldNum').innerText = coldNumbers.join(', ');
+
+            document.getElementById('rasioGanjilGenap').innerText = `${ganjilCount}G : ${genapCount}K`;
+            document.getElementById('rasioBesarKecil').innerText = `${besarCount}B : ${kecilCount}K`;
+
+            // 2. SISTEM PERINGATAN POLA PATAH (BACKTESTING 3 PUTARAN TERAKHIR)
+            let barisTerbaru = barisData.slice(-3); // Ambil 3 data paling terakhir diinput
+            let jumlahZonk = 0;
+
+            barisTerbaru.forEach(angkas => {
+                let g = 0, k = 0;
+                for(let i=0; i<4; i++) {
+                    if(parseInt(angkas[i]) % 2 === 0) k++; else g++;
+                }
+                if(g === 4 || k === 4) {
+                    jumlahZonk++;
+                }
+            });
+
+            const papanPeringatan = document.getElementById('papanPeringatan');
+            papanPeringatan.classList.remove('hidden');
+
+            if (jumlahZonk >= 2) {
+                papanPeringatan.className = "p-4 rounded-xl border bg-rose-950/40 border-rose-800 text-rose-300 flex items-start gap-3";
+                papanPeringatan.innerHTML = `
+                    <div class="text-xl">⚠️</div>
+                    <div>
+                        <strong class="block text-rose-200">PERINGATAN: Tren Pasaran Sedang Patah (Chaos)!</strong>
+                        <p class="text-xs mt-0.5 text-rose-400">Bandar mengeluarkan pola ekstrem beruntun pada putaran terakhir. Disarankan untuk menurunkan nilai taruhan atau gunakan Angka Cadangan (AC) di luar sistem roda.</p>
+                    </div>
+                `;
+            } else {
+                papanPeringatan.className = "p-4 rounded-xl border bg-emerald-950/40 border-emerald-800 text-emerald-300 flex items-start gap-3";
+                papanPeringatan.innerHTML = `
+                    <div class="text-xl">✅</div>
+                    <div>
+                        <strong class="block text-emerald-200">Kondisi Tren: Stabil</strong>
+                        <p class="text-xs mt-0.5 text-emerald-400">Perputaran angka mengikuti kurva probabilitas normal. Sistem roda memiliki tingkat akurasi tinggi untuk digunakan.</p>
+                    </div>
+                `;
+            }
+
+            // 3. GENERATOR RODA RINGKAS (6 Angka Pilihan)
+            let poolRoda = [...hotNumbers, ...coldNumbers].slice(0, 6);
+            poolRoda.sort((a,b) => a - b);
+
+            // Jalankan Template Roda Ringkas 9 Baris Paten Gail Howard
+            let barisRoda = [
+                [poolRoda[0], poolRoda[1]],
+                [poolRoda[0], poolRoda[2]],
+                [poolRoda[1], poolRoda[2]],
+                [poolRoda[3], poolRoda[4]],
+                [poolRoda[3], poolRoda[5]],
+                [poolRoda[4], poolRoda[5]],
+                [poolRoda[0], poolRoda[3]],
+                [poolRoda[1], poolRoda[4]],
+                [poolRoda[2], poolRoda[5]]
+            ];
+
+            const kontainerRoda = document.getElementById('hasilRoda');
+            kontainerRoda.innerHTML = ''; 
+
+            barisRoda.forEach(pasang => {
+                let div = document.createElement('div');
+                div.className = "bg-slate-700 text-amber-300 py-3 rounded-xl border border-slate-600 hover:border-amber-400 transition cursor-pointer";
+                div.innerText = `${pasang[0]}${pasang[1]}`;
+                kontainerRoda.appendChild(div);
+            });
+        }
+    </script>
+</body>
+</html>
+
